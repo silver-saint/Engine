@@ -32,151 +32,72 @@ template <typename T>
 class Ref
 {
 public:
-    Ref() : m_Instance(nullptr) {}
+    Ref() = default;
 
-    Ref(std::nullptr_t) : m_Instance(nullptr) {}
-
-    Ref(T* instance) : m_Instance(instance)
-    {
-        static_assert(std::is_base_of<RefCounted, T>::value, "Class is not RefCounted!");
-        std::lock_guard<std::mutex> lock(m);
-        Engine::Allocator::AddToAllocatedMemory(m_Instance);
-        IncRef();
-    }
+    Ref(T* instance = nullptr);
 
     template <typename T2>
-    Ref(const Ref<T2>& other)
-    {
-        m_Instance = (T*) other.m_Instance;
-        IncRef();
-    }
+    Ref(const Ref<T2>& other);
 
     template <typename T2>
-    Ref(Ref<T2>&& other)
-    {
-        m_Instance = (T*) other.m_Instance;
-        other.m_Instance = nullptr;
-    }
+    Ref(Ref<T2>&& other);
 
-    static Ref<T> CopyWithoutIncrement(const Ref<T>& other)
-    {
-        Ref<T> result = nullptr;
-        result->m_Instance = other.m_Instance;
-        return result;
-    }
+    ~Ref();
 
-    ~Ref() { DecRef(); }
+    Ref(const Ref<T>& other);
 
-    Ref(const Ref<T>& other) : m_Instance(other.m_Instance) { IncRef(); }
+public:
+    Ref& operator=(std::nullptr_t);
 
-    Ref& operator=(std::nullptr_t)
-    {
-        DecRef();
-        m_Instance = nullptr;
-        return *this;
-    }
-
-    Ref& operator=(const Ref<T>& other)
-    {
-        other.IncRef();
-        DecRef();
-
-        m_Instance = other.m_Instance;
-        return *this;
-    }
+    Ref& operator=(const Ref<T>& other);
 
     template <typename T2>
-    Ref& operator=(const Ref<T2>& other)
-    {
-        other.IncRef();
-        DecRef();
-
-        m_Instance = other.m_Instance;
-        return *this;
-    }
+    Ref& operator=(const Ref<T2>& other);
 
     template <typename T2>
-    Ref& operator=(Ref<T2>&& other)
-    {
-        DecRef();
+    Ref& operator=(Ref<T2>&& other);
 
-        m_Instance = other.m_Instance;
-        other.m_Instance = nullptr;
-        return *this;
-    }
+    operator bool();
 
-    operator bool() { return m_Instance != nullptr; }
+    operator bool() const;
 
-    operator bool() const { return m_Instance != nullptr; }
+    T* operator->();
 
-    T* operator->() { return m_Instance; }
+    const T* operator->() const;
+    T& operator*();
+    const T& operator*() const;
 
-    const T* operator->() const { return m_Instance; }
+    bool operator==(const Ref<T>& other) const;
 
-    T& operator*() { return *m_Instance; }
+    bool operator!=(const Ref<T>& other) const;
 
-    const T& operator*() const { return *m_Instance; }
+    operator T*();
+    operator T*() const;
 
-    T* Raw() { return m_Instance; }
-
-    const T* Raw() const { return m_Instance; }
-
-    void Reset(T* instance = nullptr)
-    {
-        DecRef();
-        m_Instance = instance;
-    }
-
-    template <typename T2>
-    Ref<T2> As() const
-    {
-        return Ref<T2>(*this);
-    }
-
+public:
     template <typename... Args>
-    static Ref<T> Create(Args&&... args)
-    {
-        return Ref<T>(Engine::Allocator::Allocate<T>(std::forward<Args>(args)...));
-    }
+    static Ref<T> Create(Args&&... args);
 
-    bool operator==(const Ref<T>& other) const { return m_Instance == other.m_Instance; }
+    static Ref<T> CopyWithoutIncrement(const Ref<T>& other);
 
-    bool operator!=(const Ref<T>& other) const { return !(*this == other); }
+public:
+    T* Raw();
 
-    bool EqualsObject(const Ref<T>& other)
-    {
-        if (!m_Instance || !other.m_Instance) return false;
+    const T* Raw() const;
 
-        return *m_Instance == *other.m_Instance;
-    }
+    void Reset(T* instance = nullptr);
+    template <typename T2>
+    Ref<T2> As() const;
 
-    operator T*() { return m_Instance; }
-
-    operator T*() const { return m_Instance; }
+    bool EqualsObject(const Ref<T>& other);
 
 private:
-    void IncRef() const
-    {
-        if (m_Instance) { m_Instance->IncRefCount(); }
-    }
-
-    void DecRef() const
-    {
-        if (m_Instance)
-        {
-            m_Instance->DecRefCount();
-            if (m_Instance->GetRefCount() == 0)
-            {
-                std::lock_guard<std::mutex> lock(m);
-                Engine::Allocator::Deallocate(m_Instance);
-                m_Instance = nullptr;
-            }
-        }
-    }
+    void IncRef() const;
+    void DecRef() const;
 
     template <class T2>
     friend class Ref;
-    mutable T* m_Instance;
+    mutable T* m_Instance{};
 };
 
 template <typename T>
@@ -184,14 +105,14 @@ class WeakRef
 {
 public:
     WeakRef() = default;
+    ~WeakRef() = default;
 
     WeakRef(Ref<T> ref) { m_Instance = ref.Raw(); }
 
     WeakRef(T* instance) { m_Instance = instance; }
 
+public:
     bool IsValid() const { return m_Instance ? Engine::Allocator::IsLive(m_Instance) : false; }
-
-    operator bool() const { return IsValid(); }
 
     Ref<T> Lock() const
     {
@@ -199,6 +120,11 @@ public:
         return Ref<T>();
     }
 
+public:
+    operator bool() const { return IsValid(); }
+
 private:
     T* m_Instance = nullptr;
 };
+
+#include <Core/Ref.impl.hpp>
