@@ -5,6 +5,7 @@ Window::WindowClass Window::WindowClass::wndClass;
 
 Window::WindowClass::WindowClass() noexcept : hInstance{GetModuleHandle(nullptr)}
 {
+    //UwU
     WNDCLASSEX winClass;
     winClass = {};
     winClass.cbSize = sizeof(winClass);
