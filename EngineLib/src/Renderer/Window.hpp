@@ -42,10 +42,12 @@ namespace Engine
     class Window : public RefCounted
     {
     public:
-        virtual ResultValueType<WindowStatus> Init(RendererSpec& rendererSpec) = 0;
+        virtual ~Window();
+        virtual ResultValueType<WindowStatus> Init() = 0;
         virtual ResultValueType<WindowStatus> CreateSurface(VkInstance instance) = 0;
         virtual ResultValueType<WindowStatus> DestroySurface(VkInstance instance) = 0;
-        virtual ResultValue<WindowStatus, VkSurfaceKHR> GetSurface() = 0;
+        virtual ResultValue<WindowStatus, VkSurfaceKHR> GetSurface() const = 0;
+        virtual ResultValue<bool, std::vector<std::string>> GetRequiredExtensions() = 0;
     public:
         static ResultValue<WindowStatus, Window*> Create(RendererSpec& rendererSpec);
         static ResultValueType<WindowStatus> Destroy(Window* window);
@@ -53,29 +55,4 @@ namespace Engine
         RendererSpec m_RendererSpec;
         VkSurfaceKHR m_Surface;
     };
-    /*
-    class Window: public RefCounted
-    {
-    public:
-        Window() = default;
-        ~Window();
-
-    public:
-        ResultValueType<WindowStatus> Init(RendererSpec& rendererSpec);
-        ResultValueType<WindowStatus> CreateSurface(VkInstance instance);
-        ResultValueType<WindowStatus> DestroySurface(VkInstance instance);
-        ResultValue<WindowStatus, VkSurfaceKHR> GetSurface();
-
-    public:
-        static ResultValue<WindowStatus, Window*> Create(RendererSpec& rendererSpec);
-        static ResultValueType<WindowStatus> Destroy(Window* window);
-
-        static ResultValue<bool, std::vector<std::string>> GetRequiredExtensions();
-
-    private:
-        RendererSpec m_RendererSpec;
-        GLFWwindow* m_WindowPtr;
-        VkSurfaceKHR m_Surface;
-    };
-    */
 }// namespace Engine

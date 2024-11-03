@@ -3,12 +3,13 @@
 
 namespace Engine
 {
-    Win32Window::Win32Window() noexcept : m_hInstance{GetModuleHandle(nullptr)}
+    Win32Window::Win32Window(const RendererSpec& spec) noexcept : m_hInstance{GetModuleHandle(nullptr)}
     {
         WNDCLASSEX winClass;
+        p_RenderSpec = spec;
         winClass = {};
         winClass.cbSize = sizeof(winClass);
-        winClass.lpszClassName = "stuff";
+        winClass.lpszClassName = p_RenderSpec.AppName.data();
         winClass.lpfnWndProc = HandleMessageSetup;
         winClass.cbClsExtra = 0;
         winClass.cbWndExtra = 0;
@@ -22,16 +23,17 @@ namespace Engine
         RegisterClassEx(&winClass);
     }
 
-    ResultValueType<WindowStatus>Win32Window::Init()
+    ResultValueType<WindowStatus>Win32Window::Init() 
     {
 
         RECT windowRect = {};
         windowRect.left = 100;
         windowRect.bottom = 100;
-        windowRect.right = windowRect.left + m_RenderSpec.width;
-        windowRect.top = windowRect.bottom + m_RenderSpec.height;
+        windowRect.right = windowRect.left + p_RenderSpec.width;
+        windowRect.top = windowRect.bottom + p_RenderSpec.height;
         AdjustWindowRect(&windowRect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
-        m_hWnd = CreateWindow("stuff", m_RenderSpec.AppName.data(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+        m_hWnd = CreateWindow(p_RenderSpec.AppName.data(), p_RenderSpec.AppName.data(), WS_OVERLAPPEDWINDOW,
+                              CW_USEDEFAULT, CW_USEDEFAULT,
                             windowRect.right - windowRect.left, windowRect.top - windowRect.bottom, nullptr, nullptr,
                             m_hInstance, this);
         if (!m_hWnd)
@@ -42,6 +44,59 @@ namespace Engine
         ShowWindow(m_hWnd, SW_SHOWDEFAULT);
         return WindowStatus::Created;
     }
+
+    ResultValueType<WindowStatus> Win32Window::CreateSurface(VkInstance instance)
+    {
+        WindowStatus status = WindowStatus::Fail;
+
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+        VkWin32SurfaceCreateInfoKHR createInfo = {};
+        createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+        createInfo.hwnd = m_hWnd;
+        createInfo.hinstance = GetModuleHandle(NULL);
+        auto resultValue = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &m_Surface);
+        if (VK_SUCCESS == resultValue) { status = WindowStatus::Surface_Created; }
+#else
+        LOG_ERROR("Non Windows platforms not supported at the moment!\n");
+#endif
+
+        return ResultValueType{status};
+    }
+
+    ResultValueType<WindowStatus> Win32Window::DestroySurface(VkInstance instance)
+    {
+        vkDestroySurfaceKHR(instance, m_Surface, nullptr);
+
+        return ResultValueType{WindowStatus::Surface_Destroyed};
+    }
+
+    ResultValue<WindowStatus, VkSurfaceKHR> Win32Window::GetSurface() const
+    {
+        if (m_Surface == VK_NULL_HANDLE)
+        {
+            return ResultValue<WindowStatus, VkSurfaceKHR>(WindowStatus::Fail);
+        }
+        return ResultValue<WindowStatus, VkSurfaceKHR>(WindowStatus::Success, m_Surface);
+    }
+
+    ResultValue<bool, std::vector<std::string>> Win32Window::GetRequiredExtensions()
+    {
+        uint32_t count;
+        const char** extensions = glfwGetRequiredInstanceExtensions(&count);
+
+        std::vector<std::string> output;
+
+        LOG_INFO("Required instance extensions:\n");
+        for (uint32_t i = 0; i < count; i++)
+        {
+            LOG_INFO("    %s\n", extensions[i]);
+            output.push_back(std::string(extensions[i]));
+        }
+
+        return ResultValue{true, output};
+    }
+
+
 
     Win32Window::~Win32Window() 
     { 
