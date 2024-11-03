@@ -3,14 +3,12 @@
 
 namespace Engine
 {
-    WindowClass WindowClass::wndClass;
-
-    Win32Window::WindowClass::WindowClass() noexcept : hInstance{GetModuleHandle(nullptr)}
+    Win32Window::Win32Window() noexcept : m_hInstance{GetModuleHandle(nullptr)}
     {
         WNDCLASSEX winClass;
         winClass = {};
         winClass.cbSize = sizeof(winClass);
-        winClass.lpszClassName = GetName();
+        winClass.lpszClassName = "stuff";
         winClass.lpfnWndProc = HandleMessageSetup;
         winClass.cbClsExtra = 0;
         winClass.cbWndExtra = 0;
@@ -20,39 +18,36 @@ namespace Engine
         winClass.lpszMenuName = nullptr;
         winClass.hIconSm = nullptr;
         winClass.style = CS_VREDRAW | CS_HREDRAW;
-        winClass.hInstance = GetInstance();
+        winClass.hInstance = m_hInstance;
         RegisterClassEx(&winClass);
     }
 
-    HINSTANCE Win32Window::WindowClass::GetInstance() noexcept { return wndClass.hInstance; }
-
-    const char* Win32Window::WindowClass::GetName() noexcept { return windowName; }
-
-    Win32Window::WindowClass::~WindowClass() { UnregisterClass(wndClass.windowName, GetInstance()); }
-
-    void Win32Window::Init(i32 w, i32 h, const char* name)
+    ResultValueType<WindowStatus>Win32Window::Init()
     {
-        width = w;
-        height = h;
+
         RECT windowRect = {};
         windowRect.left = 100;
         windowRect.bottom = 100;
-        windowRect.right = windowRect.left + width;
-        windowRect.top = windowRect.bottom + height;
+        windowRect.right = windowRect.left + m_RenderSpec.width;
+        windowRect.top = windowRect.bottom + m_RenderSpec.height;
         AdjustWindowRect(&windowRect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
-        hwnd = CreateWindow(WindowClass::GetName(), name, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+        m_hWnd = CreateWindow("stuff", m_RenderSpec.AppName.data(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
                             windowRect.right - windowRect.left, windowRect.top - windowRect.bottom, nullptr, nullptr,
-                            WindowClass::GetInstance(), this);
-        if (!hwnd)
+                            m_hInstance, this);
+        if (!m_hWnd)
         {
-            MessageBox(hwnd, "Couldn't init hwnd", "Error!", MB_OK);
-            return;
+            MessageBox(m_hWnd, "Couldn't init hwnd", "Error!", MB_OK);
+            return WindowStatus::Fail;
         }
-        ShowWindow(hwnd, SW_SHOWDEFAULT);
-        //   pGfx = std::make_unique<Graphics>(hwnd, width, height);
+        ShowWindow(m_hWnd, SW_SHOWDEFAULT);
+        return WindowStatus::Created;
     }
 
-    Win32Window::~Win32Window() { DestroyWindow(hwnd); }
+    Win32Window::~Win32Window() 
+    { 
+        
+        DestroyWindow(m_hWnd);
+    }
 
     LRESULT CALLBACK Win32Window::HandleMessageSetup(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
     {
@@ -99,13 +94,6 @@ namespace Engine
                 //  kbd.onChar(static_cast<u8>(wParam));
                 break;
             case WM_PAINT:
-                /*
-            if (pGfx)
-            {
-                pGfx->OnUpdate();
-                pGfx->OnRender();
-            }
-            */
                 break;
         }
         return DefWindowProc(hwnd, msg, wParam, lParam);

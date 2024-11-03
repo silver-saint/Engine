@@ -18,38 +18,15 @@
 
 namespace Engine
 {
-    class WindowClass
-    {
-    public:
-        static const char* GetName() noexcept;
-        static HINSTANCE GetInstance() noexcept;
-
-    private:
-        WindowClass() noexcept;
-        ~WindowClass();
-        WindowClass& operator=(const WindowClass&) = delete;
-        WindowClass(const WindowClass&) = delete;
-        static constexpr const char* windowName = "Engine";
-        static WindowClass wndClass;
-        HINSTANCE hInstance;
-    };
+ 
     class Win32Window: public Window
     {
-
     public:
-        Win32Window() = delete;
-        void Init(i32 w, i32 h, const char* name) noexcept;
+        Win32Window() noexcept;
+        ResultValueType <WindowStatus>Init() noexcept;
         Win32Window(const Win32Window&) = delete;
         Win32Window& operator=(const Win32Window&) = delete;
         ~Win32Window();
-
-        [[nodiscard]] HWND GetHWND() const { return hwnd; }
-
-        // [[nodiscard]] Graphics& Gfx() { return *pGfx; }
-
-        [[nodiscard]] u32 GetWindowWidth() const { return width; }
-
-        [[nodiscard]] u32 GetWindowHeight() const { return height; }
 
         static LRESULT CALLBACK HandleMessageSetup(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
         static LRESULT CALLBACK HandleMessageThunk(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
@@ -60,9 +37,8 @@ namespace Engine
         //  Keyboard kbd;
 
     private:
-        HWND hwnd;
-        u32 width;
-        u32 height;
-        //std::unique_ptr<Graphics> pGfx;
+        HWND m_hWnd;
+        HINSTANCE m_hInstance;
+        RendererSpec m_RenderSpec;
     };
 }// namespace engine
