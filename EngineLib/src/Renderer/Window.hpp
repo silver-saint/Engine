@@ -39,7 +39,21 @@ enum class WindowStatus
 
 namespace Engine
 {
-
+    class Window : public RefCounted
+    {
+    public:
+        virtual ResultValueType<WindowStatus> Init(RendererSpec& rendererSpec) = 0;
+        virtual ResultValueType<WindowStatus> CreateSurface(VkInstance instance) = 0;
+        virtual ResultValueType<WindowStatus> DestroySurface(VkInstance instance) = 0;
+        virtual ResultValue<WindowStatus, VkSurfaceKHR> GetSurface() = 0;
+    public:
+        static ResultValue<WindowStatus, Window*> Create(RendererSpec& rendererSpec);
+        static ResultValueType<WindowStatus> Destroy(Window* window);
+    private:
+        RendererSpec m_RendererSpec;
+        VkSurfaceKHR m_Surface;
+    };
+    /*
     class Window: public RefCounted
     {
     public:
@@ -63,4 +77,5 @@ namespace Engine
         GLFWwindow* m_WindowPtr;
         VkSurfaceKHR m_Surface;
     };
+    */
 }// namespace Engine
