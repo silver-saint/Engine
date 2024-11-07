@@ -44,6 +44,7 @@ namespace Engine
     private:
         bool m_StoppedFlag{};
         ApplicationSpec m_ApplicationSpec{};
+        Win32Window wnd;
     };
 
 }// namespace Engine

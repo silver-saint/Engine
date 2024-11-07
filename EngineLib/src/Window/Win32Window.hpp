@@ -15,7 +15,7 @@
 #include <types.hpp>
 #include <optional>
 #include "Renderer/Window.hpp"
-
+#include <Keyboard/Keyboard.hpp>
 namespace Engine
 {
 
@@ -40,7 +40,7 @@ namespace Engine
         static void ProcessMessages();
 
     public:
-        //  Keyboard kbd;
+          Keyboard kbd;
     protected:
         RendererSpec p_RenderSpec;
         VkSurfaceKHR m_Surface;

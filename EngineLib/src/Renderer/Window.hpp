@@ -51,6 +51,7 @@ namespace Engine
 
     public:
         static void PollEvents();
+
         static i32 ShouldClose() { return s_WindowShouldClose; }
         static ResultValue<WindowStatus, Window*> Create(RendererSpec& rendererSpec);
         static ResultValueType<WindowStatus> Destroy(Window* window);

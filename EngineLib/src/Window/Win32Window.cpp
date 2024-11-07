@@ -1,3 +1,15 @@
+/**
+ * @file
+ * @author Neyko Naydenov ( neyko641@gmail.com )
+ * @brief 
+ * @version 1.0
+ * @date 
+ * 
+ * @section DESCRIPTION
+ * 
+ * Win32 implementation of the Window class.
+ */
+
 #include "Win32Window.hpp"
 #include <iostream>
 
@@ -139,16 +151,16 @@ namespace Engine
                 }
                 break;
             case WM_KILLFOCUS:
-                // kbd.ClearState();
+                 kbd.ClearState();
                 break;
             case WM_KEYDOWN:
-                //  kbd.onKeyPressed(static_cast<u8>(wParam));
+                  kbd.onKeyPressed(static_cast<u8>(wParam));
                 break;
             case WM_KEYUP:
-                //  kbd.onKeyReleased(static_cast<u8>(wParam));
+                  kbd.onKeyReleased(static_cast<u8>(wParam));
                 break;
             case WM_CHAR:
-                //  kbd.onChar(static_cast<u8>(wParam));
+                  kbd.onChar(static_cast<u8>(wParam));
                 break;
             case WM_PAINT:
                 //onRender; 
